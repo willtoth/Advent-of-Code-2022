@@ -32,7 +32,7 @@ fn command_to_action(line: &str, stacks: &mut Vec<Vec<char>>, all_at_once: bool)
         .replace("from ", "")
         .replace("to ", "")
         .split(" ")
-        .map(|l| l.parse::<usize>().unwrap())
+        .filter_map(|l| l.parse::<usize>().ok())
         .collect::<Vec<usize>>();
 
     // [cnt src dest]
