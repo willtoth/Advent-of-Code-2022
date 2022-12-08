@@ -8,7 +8,7 @@ fn solve(window_size: usize) -> usize {
         .map(|c| c.iter().collect::<HashSet<&u8>>().len())
         .enumerate()
         .find(|f| f.1 == window_size)
-        .unwrap()
+        .expect("No solution found")
         .0
         + window_size
 }
