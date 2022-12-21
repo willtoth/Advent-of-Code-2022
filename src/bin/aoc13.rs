@@ -1,8 +1,10 @@
 #![feature(iter_array_chunks)]
 
-use std::{any::Any, fs};
+use std::fs;
 use toml::Value;
 
+// If one element at idx is an array and the other is an integer, make the
+// integer into a single element array
 fn try_fix_array_mismatch(a: &mut [Value], b: &mut [Value], idx: usize) {
     let left = &mut a[idx];
     let right = &mut b[idx];
@@ -56,7 +58,7 @@ fn do_compare(a: &mut [Value], b: &mut [Value], idx: usize) -> Option<bool> {
 
     // Should always have the same type when coming into this function (after checking bounds)
     if !a[idx].same_type(&b[idx]) {
-        panic!("HERE");
+        panic!("Type mismatch");
     }
 
     if a[idx].is_integer() {
