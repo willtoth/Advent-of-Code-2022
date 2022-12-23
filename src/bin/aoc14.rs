@@ -2,12 +2,12 @@
 
 use std::{fmt::Debug, fs};
 
-pub trait GeometricBounds {
+pub trait BoundingBox {
     fn bounds(&self) -> (Point, Point);
 
     fn merge_bounds<T>(&self, other: T) -> (Point, Point)
     where
-        T: GeometricBounds,
+        T: BoundingBox,
     {
         let mine = self.bounds();
         let other = other.bounds();
@@ -27,7 +27,7 @@ pub trait GeometricBounds {
     }
 }
 
-impl GeometricBounds for (Point, Point) {
+impl BoundingBox for (Point, Point) {
     fn bounds(&self) -> (Point, Point) {
         (self.0, self.1)
     }
@@ -87,7 +87,7 @@ impl Line {
     }
 }
 
-impl GeometricBounds for Line {
+impl BoundingBox for Line {
     // (top left e.g. [min_x, miny], bottom right)
     fn bounds(&self) -> (Point, Point) {
         let tl = Point::new(self.start.x.min(self.end.x), self.start.y.min(self.end.y));
@@ -127,7 +127,7 @@ impl Structure {
     }
 }
 
-impl GeometricBounds for Structure {
+impl BoundingBox for Structure {
     // (top left e.g. [min_x, miny], bottom right)
     fn bounds(&self) -> (Point, Point) {
         let mut b = self.lines[0].bounds();
@@ -257,7 +257,7 @@ impl Cave {
     }
 }
 
-impl GeometricBounds for Cave {
+impl BoundingBox for Cave {
     // (top left e.g. [min_x, miny], bottom right)
     fn bounds(&self) -> (Point, Point) {
         let mut b = self.rocks[0].bounds();
