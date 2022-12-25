@@ -1,6 +1,8 @@
 pub mod bounding_box;
 pub mod circle;
 pub mod grid2d;
+pub mod grid_draw;
+pub mod line;
 pub mod point;
 pub mod rectangle;
 
@@ -14,7 +16,11 @@ impl<T> Num for T where
 {
 }
 
+pub trait Filled {}
+
 pub use crate::geometry::bounding_box::*;
+pub use crate::geometry::circle::*;
 pub use crate::geometry::grid2d::*;
+pub use crate::geometry::line::*;
 pub use crate::geometry::point::*;
 pub use crate::geometry::rectangle::*;

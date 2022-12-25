@@ -1,18 +1,29 @@
-use std::{
-    fmt::Debug,
-    ops::{Index, Rem},
-    str::FromStr,
-    vec,
-};
-
-use toml::de;
+use std::{fmt::Debug, ops::Rem, vec};
 
 use crate::geometry::{BoundingBox, Point, Rectangle};
+
+pub struct GridRowIterator<'a, T: Copy + Clone> {
+    grid: &'a Grid2d<T>,
+    row: i32,
+    col: i32,
+}
+
+impl<'a, T: Copy + Clone> Iterator for GridRowIterator<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let val = self.grid.index(self.col, self.row).ok();
+        self.col += 1;
+
+        val
+    }
+}
 
 pub struct Grid2d<T: Copy + Clone> {
     grid: Vec<Vec<T>>,
     coord_top_left: Point<i32>,
-    default: T,
+    pub default: T,
+    bounds: Option<Rectangle<i32>>,
 }
 
 impl<T: Copy + Clone> Grid2d<T> {
@@ -21,20 +32,39 @@ impl<T: Copy + Clone> Grid2d<T> {
             grid: vec![vec![default; 1]; 1],
             coord_top_left: Point::new(0, 0),
             default,
+            bounds: None,
         }
     }
 
-    pub fn index(&self, x: i32, y: i32) -> &T {
-        &self.grid[(y - self.coord_top_left.y) as usize][(x - self.coord_top_left.x) as usize]
+    pub fn index(&self, x: i32, y: i32) -> Result<&T, ()> {
+        if !self.in_bounds(&Point::new(x, y)) {
+            return Err(());
+        }
+        Ok(&self.grid[(y - self.coord_top_left.y) as usize][(x - self.coord_top_left.x) as usize])
     }
 
     pub fn index_mut(&mut self, x: i32, y: i32) -> &mut T {
         &mut self.grid[(y - self.coord_top_left.y) as usize][(x - self.coord_top_left.x) as usize]
     }
 
+    pub fn row_iter(&self, row: i32) -> GridRowIterator<T> {
+        GridRowIterator {
+            grid: self,
+            row,
+            col: self.coord_top_left.x,
+        }
+    }
+
     pub fn set_or_insert(&mut self, x: i32, y: i32, value: T) {
         let p = Point::new(x, y);
         let bounds = self.bounds();
+
+        if let Some(a) = self.bounds {
+            if !a.in_bounds(&Point::new(x, y)) {
+                return;
+            }
+        }
+
         if !self.in_bounds(&p) {
             // Add columns before
             if x < bounds.tl.x {
@@ -97,6 +127,7 @@ impl<T: Clone + Copy> Grid2d<T> {
             grid: vec![vec![start_val; width]; height],
             coord_top_left: Point::new(0, 0),
             default: start_val,
+            bounds: None,
         }
     }
 
@@ -105,7 +136,12 @@ impl<T: Clone + Copy> Grid2d<T> {
             grid: vec![vec![start_val; coords.width() as usize]; coords.height() as usize],
             coord_top_left: coords.tl,
             default: start_val,
+            bounds: None,
         }
+    }
+
+    pub fn set_max_bounds(&mut self, bounds: Rectangle<i32>) {
+        self.bounds = Some(bounds);
     }
 }
 
@@ -167,7 +203,7 @@ impl<T: ToString + Copy> Debug for Grid2d<T> {
             }
 
             for x in bounds.tl.x..bounds.br.x {
-                print!("{}", self.index(x, y).to_string());
+                print!("{}", self.index(x, y).unwrap().to_string());
             }
             println!("");
         }
@@ -194,20 +230,21 @@ mod tests {
     #[test]
     fn set_or_insert() {
         let mut grid = Grid2d::with_size(10, 10, '.');
-        assert_eq!(*grid.index(5, 5), '.');
+        assert_eq!(*grid.index(5, 5).unwrap(), '.');
         grid.set_or_insert(5, 5, '#');
-        assert_eq!(*grid.index(5, 5), '#');
+        assert_eq!(*grid.index(5, 5).unwrap(), '#');
 
         grid.set_or_insert(10, 10, 'w');
-        assert_eq!(*grid.index(10, 10), 'w');
+        assert_eq!(*grid.index(10, 10).unwrap(), 'w');
 
         grid.set_or_insert(15, 15, '8');
-        assert_eq!(*grid.index(15, 15), '8');
-        assert_eq!(*grid.index(12, 12), '.');
+        assert_eq!(*grid.index(15, 15).unwrap(), '8');
+        assert_eq!(*grid.index(12, 12).unwrap(), '.');
 
         grid.set_or_insert(-8, -3, 'M');
-        assert_eq!(*grid.index(-8, -3), 'M');
-        assert_eq!(*grid.index(-2, -1), '.');
+        assert_eq!(*grid.index(-8, -3).unwrap(), 'M');
+        assert_eq!(*grid.index(-2, -1).unwrap(), '.');
         assert_eq!(grid.coord_top_left, Point::new(-8, -3));
+        assert_eq!(grid.index(-9, -4), Err(()));
     }
 }

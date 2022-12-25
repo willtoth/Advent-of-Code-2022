@@ -1,7 +1,5 @@
-use crate::geometry::{BoundingBox, Num, Point};
+use crate::geometry::{BoundingBox, Filled, Num, Point, Rectangle};
 use std::fmt::Debug;
-
-use super::Rectangle;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Circle<T: Num> {
@@ -23,3 +21,5 @@ impl<T: Num> BoundingBox<T> for Circle<T> {
         )
     }
 }
+
+impl<T: Num> Filled for Circle<T> {}

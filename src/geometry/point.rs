@@ -1,7 +1,8 @@
 use crate::geometry::Num;
+use num_traits::{PrimInt, Signed};
 use std::{fmt::Debug, ops::Add};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Point<T>
 where
     T: Num,
@@ -27,6 +28,27 @@ where
 
     pub fn new(x: T, y: T) -> Point<T> {
         Point { x, y }
+    }
+}
+
+impl<T: Num> Point<T>
+where
+    f64: From<T>,
+{
+    pub fn distance(&self, other: &Point<T>) -> f64 {
+        let dx = other.x - self.x;
+        let dy = other.y - self.y;
+
+        <T as Into<f64>>::into((dx * dx) + (dy * dy)).sqrt()
+    }
+}
+
+impl<T: Num + PrimInt + Signed> Point<T> {
+    pub fn manhattan_distance(&self, other: &Point<T>) -> T {
+        let dx = (self.x - other.x).abs();
+        let dy = (self.y - other.y).abs();
+
+        dx + dy
     }
 }
 
